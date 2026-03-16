@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const TransitSenseApp());
 }
 
-class TransitSenseApp extends StatelessWidget {
+class TransitSenseApp extends StatefulWidget {
   const TransitSenseApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<TransitSenseApp> createState() => _TransitSenseAppState();
+}
+
+class _TransitSenseAppState extends State<TransitSenseApp> {
+
+  bool isDarkMode = false;
+
+  void toggleTheme(bool value) {
+    setState(() {
+      isDarkMode = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TransitSense',
-      theme: AppTheme.theme,
-      home: SplashScreen(),
+      title: "TransitSense",
       debugShowCheckedModeBanner: false,
+
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
+      home: HomeScreen(toggleTheme: toggleTheme, isDarkMode: isDarkMode),
     );
   }
 }

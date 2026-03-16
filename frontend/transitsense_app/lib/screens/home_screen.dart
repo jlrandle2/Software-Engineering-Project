@@ -6,15 +6,22 @@ import 'settings_screen.dart';
 import 'report_issue_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final Function(bool) toggleTheme;
+  final bool isDarkMode;
+
+  const HomeScreen({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primaryBlue,
         title: const Text("TransitSense"),
         actions: const [
-          // TODO: Implement Profile page after completing core app flow
           Icon(Icons.person),
           SizedBox(width: 12),
         ],
@@ -22,13 +29,11 @@ class HomeScreen extends StatelessWidget {
 
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// HOME TITLE
               const Text(
                 "Home",
                 style: TextStyle(
@@ -49,7 +54,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   );
                 },
-
                 child: AbsorbPointer(
                   child: TextField(
                     decoration: InputDecoration(
@@ -68,7 +72,6 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              /// RECENT TRIPS
               const Text(
                 "Recent Trips",
                 style: TextStyle(
@@ -85,7 +88,6 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              /// MAP SECTION
               const Text(
                 "Map",
                 style: TextStyle(
@@ -105,14 +107,12 @@ class HomeScreen extends StatelessWidget {
                     ),
                   );
                 },
-
                 child: Container(
                   height: 200,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(12),
                   ),
-
                   child: const Center(
                     child: Text(
                       "Map Preview\nTap to open map",
@@ -126,9 +126,52 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
-      /// BOTTOM NAVIGATION BAR
+      /// STICKY CTA BUTTON
+      bottomSheet: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+            )
+          ],
+        ),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const RouteSearchScreen(),
+              ),
+            );
+          },
+          child: const Text(
+            "Plan Route",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+
+      /// BOTTOM NAVIGATION
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
+        selectedItemColor: AppColors.primaryBlue,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
 
         onTap: (index) {
 
@@ -154,7 +197,10 @@ class HomeScreen extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const SettingsScreen(),
+                builder: (context) => SettingsScreen(
+                  toggleTheme: toggleTheme,
+                  isDarkMode: isDarkMode,
+                ),
               ),
             );
           }
@@ -178,8 +224,8 @@ class HomeScreen extends StatelessWidget {
           ),
 
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
+            icon: Icon(Icons.settings),
+            label: "Settings",
           ),
         ],
       ),
@@ -188,7 +234,8 @@ class HomeScreen extends StatelessWidget {
 
   Widget _recentTripTile() {
     return Card(
-      elevation: 1,
+      color: AppColors.cardBackground,
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

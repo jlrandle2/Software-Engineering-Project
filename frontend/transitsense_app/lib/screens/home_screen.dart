@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import 'route_search_screen.dart';
+import 'transit_map_screen.dart';
+import 'settings_screen.dart';
+import 'report_issue_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,7 +14,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("TransitSense"),
         actions: const [
-          // Todo: Implement Profile page after completing the core app flow screens
+          // TODO: Implement Profile page after completing core app flow
           Icon(Icons.person),
           SizedBox(width: 12),
         ],
@@ -22,9 +26,9 @@ class HomeScreen extends StatelessWidget {
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
 
+              /// HOME TITLE
               const Text(
                 "Home",
                 style: TextStyle(
@@ -36,16 +40,28 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               /// SEARCH BAR
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Search station or destination",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppColors.searchBar,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RouteSearchScreen(),
+                    ),
+                  );
+                },
 
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                child: AbsorbPointer(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "Search station or destination",
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: AppColors.searchBar,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -80,14 +96,29 @@ class HomeScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Text("Map Preview"),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TransitMapScreen(),
+                    ),
+                  );
+                },
+
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+
+                  child: const Center(
+                    child: Text(
+                      "Map Preview\nTap to open map",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -95,9 +126,39 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
-      /// BOTTOM NAVIGATION
+      /// BOTTOM NAVIGATION BAR
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
+
+        onTap: (index) {
+
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TransitMapScreen(),
+              ),
+            );
+          }
+
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReportIssueScreen(),
+              ),
+            );
+          }
+
+          if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            );
+          }
+        },
 
         items: const [
 
@@ -126,17 +187,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _recentTripTile() {
-  return Card(
-    elevation: 1,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const ListTile(
-      leading: Icon(Icons.directions_bus),
-      title: Text("North Ave → Midtown"),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16),
-    ),
-  );
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const ListTile(
+        leading: Icon(Icons.directions_bus),
+        title: Text("North Ave → Midtown"),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+      ),
+    );
+  }
 }
-}
-    

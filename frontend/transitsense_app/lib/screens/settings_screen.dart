@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final Function(bool) toggleTheme;
+  final bool isDarkMode;
+
+  const SettingsScreen({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+
   bool notificationsEnabled = true;
-  bool darkModeEnabled = false;
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Settings"),
@@ -29,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: SwitchListTile(
               title: const Text("Enable Notifications"),
               subtitle: const Text("Receive alerts about delays and updates"),
@@ -48,14 +56,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: SwitchListTile(
               title: const Text("Dark Mode"),
               subtitle: const Text("Toggle dark theme"),
-              value: darkModeEnabled,
+              value: widget.isDarkMode,
+
               onChanged: (value) {
-                setState(() {
-                  darkModeEnabled = value;
-                });
+                widget.toggleTheme(value);
               },
             ),
           ),
@@ -67,11 +75,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: ListTile(
               leading: const Icon(Icons.language),
               title: const Text("Language"),
               subtitle: const Text("English"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -89,11 +99,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text("About TransitSense"),
               subtitle: const Text("Learn more about the app"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+
               onTap: () {
                 showAboutDialog(
                   context: context,
@@ -107,7 +119,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          /// VERSION
           const Center(
             child: Text(
               "Version 1.0.0",

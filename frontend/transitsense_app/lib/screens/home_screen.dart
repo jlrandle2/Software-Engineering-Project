@@ -4,6 +4,7 @@ import 'route_search_screen.dart';
 import 'transit_map_screen.dart';
 import 'settings_screen.dart';
 import 'report_issue_screen.dart';
+import '../services/transit_service.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(bool) toggleTheme;
@@ -139,6 +140,7 @@ class HomeScreen extends StatelessWidget {
             )
           ],
         ),
+
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryBlue,
@@ -148,13 +150,34 @@ class HomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const RouteSearchScreen(),
-              ),
-            );
+          onPressed: () async {
+            try {
+
+              await TransitService.startTrip(
+                route: "Red Line",
+                startStation: "North Ave",
+                destination: "Midtown",
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Trip tracking started")),
+              );
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RouteSearchScreen(),
+                ),
+              );
+
+            } catch (e) {
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Error starting trip")),
+              );
+
+            }
+
           },
           child: const Text(
             "Plan Route",

@@ -11,6 +11,11 @@ class UserCreate(BaseModel):
     preferred_station_id: Optional[int] = None
     safety_alerts_enabled: bool = True
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    email: Optional[EmailStr] = None
+    preferred_station_id: Optional[int] = None
+    safety_alerts_enabled: Optional[bool] = None
 
 class UserOut(BaseModel):
     user_id: int
@@ -31,6 +36,11 @@ class StationCreate(BaseModel):
     longitude: Decimal
     accessibility_features: bool = False
 
+class StationUpdate(BaseModel):
+    station_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    accessibility_features: Optional[bool] = None
 
 class StationOut(BaseModel):
     station_id: int
@@ -48,6 +58,9 @@ class RouteCreate(BaseModel):
     route_name: str = Field(min_length=1, max_length=50)
     direction: str = Field(min_length=1, max_length=20)
 
+class RouteUpdate(BaseModel):
+    route_name: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    direction: Optional[str] = Field(default=None, min_length=1, max_length=20)
 
 class RouteOut(BaseModel):
     route_id: int
@@ -64,6 +77,10 @@ class RouteStopCreate(BaseModel):
     station_id: int
     stop_sequence: int
 
+class RouteStopUpdate(BaseModel):
+    route_id: Optional[int] = None
+    station_id: Optional[int] = None
+    stop_sequence: Optional[int] = Field(default=None, gt=0)
 
 class RouteStopOut(BaseModel):
     stop_id: int
@@ -82,6 +99,13 @@ class AlertCreate(BaseModel):
     description: Optional[str] = None
     reported_by: Optional[int] = None
     is_active: bool = True
+
+class AlertUpdate(BaseModel):
+    station_id: Optional[int] = None
+    alert_type: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    description: Optional[str] = None
+    reported_by: Optional[int] = None
+    is_active: Optional[bool] = None
 
 
 class AlertOut(BaseModel):

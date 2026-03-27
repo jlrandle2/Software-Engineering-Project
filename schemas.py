@@ -53,27 +53,8 @@ class StationOut(BaseModel):
         from_attributes = True
 
 
-# ---------- Routes ----------
-class RouteCreate(BaseModel):
-    route_name: str = Field(min_length=1, max_length=50)
-    direction: str = Field(min_length=1, max_length=20)
-
-class RouteUpdate(BaseModel):
-    route_name: Optional[str] = Field(default=None, min_length=1, max_length=50)
-    direction: Optional[str] = Field(default=None, min_length=1, max_length=20)
-
-class RouteOut(BaseModel):
-    route_id: int
-    route_name: str
-    direction: str
-
-    class Config:
-        from_attributes = True
-
-
 # ---------- Route Stops ----------
 class RouteStopCreate(BaseModel):
-    route_id: int
     station_id: int
     stop_sequence: int
 
@@ -87,6 +68,24 @@ class RouteStopOut(BaseModel):
     route_id: int
     station_id: int
     stop_sequence: int
+
+    class Config:
+        from_attributes = True
+
+# ---------- Routes ----------
+class RouteCreate(BaseModel):
+    route_name: str = Field(min_length=1, max_length=50)
+    direction: str = Field(min_length=1, max_length=20)
+    stops: list[RouteStopCreate]
+
+class RouteUpdate(BaseModel):
+    route_name: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    direction: Optional[str] = Field(default=None, min_length=1, max_length=20)
+
+class RouteOut(BaseModel):
+    route_id: int
+    route_name: str
+    direction: str
 
     class Config:
         from_attributes = True

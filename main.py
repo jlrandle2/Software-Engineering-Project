@@ -118,12 +118,29 @@ def get_station(station_id: int, db: Session = Depends(get_db)):
     return station
 
 # ---------------- Routes ----------------
-@app.post("/routes", response_model=RouteOut)
+@app.post("/routes")
 def create_route(payload: RouteCreate, db: Session = Depends(get_db)):
-    route = Route(route_name=payload.route_name, direction=payload.direction)
+    route = Route(
+        route_name=payload.route_name,
+        direction=payload.direction
+    )
     db.add(route)
     db.commit()
     db.refresh(route)
+
+    for stop in payload.stops:
+        db.add(RouteStop(
+            route_id=route.route_id,
+            station_id=stop.station_id,
+            stop_sequence=stop.stop_sequence
+        ))
+
+    db.commit()
+
+    print(payload)
+    print(type(payload))
+    print(dir(payload))
+
     return route
 
 

@@ -5,7 +5,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
-DATABASE_URL = "sqlite:///./transit.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+print("USING DATABASE:", DATABASE_URL)
+
 if not DATABASE_URL:
     raise RuntimeError("Missing DATABASE_URL in environment (.env).")
 

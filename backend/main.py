@@ -2,6 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
 from db import Base, engine, get_db
 from models import User, Station, Route, RouteStop, SystemAlert
 from schemas import (
@@ -13,6 +16,14 @@ from schemas import (
 )
 
 app = FastAPI(title="Transit Backend API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow everything (for now)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create tables (for dev). In prod you’d use migrations.
 Base.metadata.create_all(bind=engine)

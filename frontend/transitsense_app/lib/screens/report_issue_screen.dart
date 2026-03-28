@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -12,6 +13,29 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
+  List<dynamic> stations = [];
+  int? selectedStationId;
+  bool isLoadingStations = true;
+  @override
+  void initState() {
+    super.initState();
+    fetchStations();
+  }
+  void fetchStations() async {
+    try {
+      var data = await ApiService.getStations();
+      setState(() {
+        stations = data;
+        isLoadingStations = false;
+      });
+    } catch (e) {
+      print("STATION ERROR: $e");
+      setState(() {
+        isLoadingStations = false;
+      });
+    }
+}
+
   String selectedIssue = "Delay";
 
   final List<String> issueTypes = [
@@ -22,29 +46,38 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     "Other"
   ];
 
-  void submitReport() {
+  void submitReport() async {
 
-    if (locationController.text.isEmpty ||
-        descriptionController.text.isEmpty) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-        ),
-      );
-
-      return;
-    }
+  if (selectedStationId == null ||
+    descriptionController.text.isEmpty) {
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Issue reported successfully"),
-      ),
+      const SnackBar(content: Text("Please fill all fields")),
+    );
+    return;
+  }
+
+  try {
+
+    await ApiService.createAlert(
+      stationId: 1, // TEMP — we’ll fix this next
+      alertType: selectedIssue,
+      description: descriptionController.text,
     );
 
-    locationController.clear();
-    descriptionController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Issue reported successfully")),
+    );
+
+    Navigator.pop(context); // go back to home
+
+  } catch (e) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Error submitting report")),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -113,15 +146,28 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
             const SizedBox(height: 8),
 
-            TextField(
-              controller: locationController,
-              decoration: InputDecoration(
-                hintText: "Enter station or stop",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            isLoadingStations
+              ? const CircularProgressIndicator()
+              : DropdownButtonFormField<int>(
+                  value: selectedStationId,
+                  hint: const Text("Select a station"),
+                  items: stations.map((station) {
+                    return DropdownMenuItem<int>(
+                      value: station['station_id'],
+                      child: Text(station['station_name']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedStationId = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
             const SizedBox(height: 20),
 

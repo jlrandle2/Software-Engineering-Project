@@ -5,18 +5,24 @@ class ApiService {
 
   static const String baseUrl = "http://localhost:8000";
 
-  static Future<List<dynamic>> getAlerts(int stationId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/alerts?station_id=$stationId'),
-    );
+  // GET ALERTS
+  static Future<List<dynamic>> getAlerts([int? stationId]) async {
+  String url = '$baseUrl/alerts';
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load alerts');
-    }
+  if (stationId != null) {
+    url += '?station_id=$stationId';
   }
 
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to load alerts');
+  }
+}
+
+  // CREATE ALERTS
   static Future<void> createAlert({
     required int stationId,
     required String alertType,
@@ -39,6 +45,7 @@ class ApiService {
     }
   }
 
+  // GET STATIONS
   static Future<List<dynamic>> getStations() async {
   final response = await http.get(Uri.parse('$baseUrl/stations'));
 
@@ -49,6 +56,7 @@ class ApiService {
   }
 }
 
+  // UPDATE PREFERRED STATION
   static Future<void> updatePreferredStation(int stationId) async {
     final response = await http.put(
       Uri.parse('$baseUrl/users/1'),

@@ -52,11 +52,17 @@ void filterStations(String query) {
 }
 
 void fetchAlerts() async {
-  try {
-    if (selectedStationId == null) return;
+  print("FETCHING ALERTS FOR STATION: $selectedStationId");
 
-    var data = await ApiService.getAlerts(selectedStationId!);
-    print("ALERTS: $data"); // 👈 ADD THIS
+  try {
+    setState(() {
+      isLoadingAlerts = true;
+    });
+
+    // 👇 THIS IS THE KEY CHANGE
+    var data = await ApiService.getAlerts(selectedStationId);
+
+    print("ALERTS: $data");
 
     setState(() {
       alerts = data;
@@ -73,14 +79,19 @@ void fetchAlerts() async {
 void fetchStations() async {
   try {
     var data = await ApiService.getStations();
+
+    print("STATIONS:");
+    for (var s in data) {
+      print("${s['station_name']} → ${s['station_id']}");
+    }
     setState(() {
       stations = data;
       filteredStations = stations;
       isLoadingStations = false;
 
       // set default if not selected yet
-      if (selectedStationId == null && stations.isNotEmpty) {
-        selectedStationId = stations[0]['station_id'];
+      if (selectedStationId == null) {
+        fetchAlerts();
       }
     });
   } catch (e) {
@@ -128,7 +139,17 @@ Widget build(BuildContext context) {
             /// STATION SEARCH
             TextField(
               controller: searchController,
-              onChanged: filterStations,
+              onChanged: (value) {
+              filterStations(value);
+
+              if (value.isEmpty) {
+                setState(() {
+                  selectedStationId = null;
+                });
+                fetchAlerts();
+              }
+            },
+
               decoration: InputDecoration(
                 hintText: "Search station",
                 prefixIcon: const Icon(Icons.search),
@@ -154,9 +175,10 @@ Widget build(BuildContext context) {
                     final station = filteredStations[index];
 
                     return ListTile(
-                      title: Text(station['station_name']),
+                      title: Text("${station['station_name']}"),
                       onTap: () {
                         setState(() {
+                          print("TAPPED STATION: ${station['station_id']}");
                           selectedStationId = station['station_id'];
                           searchController.text = station['station_name'];
                           filteredStations = [];
@@ -208,7 +230,17 @@ Widget build(BuildContext context) {
                         child: ListTile(
                           leading: const Icon(Icons.warning, color: Colors.red),
                           title: Text(alert['alert_type']),
-                          subtitle: Text(alert['description'] ?? "No description"),
+                          subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(alert['description'] ?? "No description"),
+                          if (alert['station_name'] != null)
+                            Text(
+                              "📍 ${alert['station_name']}",
+                              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                            ),
+                        ],
+                      ),
                         ),
                       );
                     }).toList(),

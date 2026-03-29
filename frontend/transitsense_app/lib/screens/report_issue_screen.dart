@@ -22,18 +22,25 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     fetchStations();
   }
   void fetchStations() async {
-    try {
-      var data = await ApiService.getStations();
-      setState(() {
-        stations = data;
-        isLoadingStations = false;
-      });
-    } catch (e) {
-      print("STATION ERROR: $e");
-      setState(() {
-        isLoadingStations = false;
-      });
-    }
+  try {
+    var data = await ApiService.getStations();
+
+    setState(() {
+      stations = data;
+      isLoadingStations = false;
+
+      // 👇 THIS MUST BE INSIDE HERE
+      if (selectedStationId == null && stations.isNotEmpty) {
+        selectedStationId = stations[0]['station_id'];
+      }
+    });
+
+  } catch (e) {
+    print("STATION ERROR: $e");
+    setState(() {
+      isLoadingStations = false;
+    });
+  }
 }
 
   String selectedIssue = "Delay";
@@ -48,6 +55,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
 
   void submitReport() async {
 
+    print("SUBMITTING ALERT FOR STATION: $selectedStationId");
+
   if (selectedStationId == null ||
     descriptionController.text.isEmpty) {
 
@@ -60,7 +69,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   try {
 
     await ApiService.createAlert(
-      stationId: 1, // TEMP — we’ll fix this next
+      stationId: selectedStationId!, // TEMP — we’ll fix this next
       alertType: selectedIssue,
       description: descriptionController.text,
     );

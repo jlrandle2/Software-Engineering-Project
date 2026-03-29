@@ -110,6 +110,7 @@ class AlertUpdate(BaseModel):
 class AlertOut(BaseModel):
     alert_id: int
     station_id: Optional[int]
+    station_name: Optional[str]  # 👈 ADD THIS
     alert_type: str
     description: Optional[str]
     reported_by: Optional[int]

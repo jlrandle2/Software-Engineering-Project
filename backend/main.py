@@ -243,7 +243,24 @@ def list_alerts(
         q = q.filter(SystemAlert.alert_type == alert_type)
     if reported_by is not None:
         q = q.filter(SystemAlert.reported_by == reported_by)
-    return q.order_by(SystemAlert.created_at.desc()).all()
+    alerts = q.order_by(SystemAlert.created_at.desc()).all()
+
+    result = []
+    for alert in alerts:
+        station = db.query(Station).filter(Station.station_id == alert.station_id).first()
+
+        result.append({
+            "alert_id": alert.alert_id,
+            "station_id": alert.station_id,
+            "station_name": station.station_name if station else None,
+            "alert_type": alert.alert_type,
+            "description": alert.description,
+            "reported_by": alert.reported_by,
+            "is_active": alert.is_active,
+            "created_at": alert.created_at
+        })
+
+    return result
 
 @app.get("/alerts/{alert_id}", response_model=AlertOut)
 def get_alert(alert_id: int, db: Session = Depends(get_db)):

@@ -16,7 +16,7 @@ def get_station_map():
 # -------------------------
 # STEP 2: CREATE ROUTE
 # -------------------------
-def create_route(route_name, station_names, station_map):
+def create_route(route_name, station_names, station_map, direction):
     stops = []
 
     for i, name in enumerate(station_names):
@@ -31,7 +31,7 @@ def create_route(route_name, station_names, station_map):
 
     res = requests.post(f"{BASE}/routes", json={
         "route_name": route_name,
-        "direction": "northbound",
+        "direction": direction,
         "stops": stops
     })
 
@@ -127,9 +127,16 @@ GREEN_LINE = [
 if __name__ == "__main__":
     station_map = get_station_map()
 
-    create_route("Red Line", RED_LINE, station_map)
-    create_route("Gold Line", GOLD_LINE, station_map)
-    create_route("Blue Line", BLUE_LINE, station_map)
-    create_route("Green Line", GREEN_LINE, station_map)
+    create_route("Red Line", RED_LINE, station_map, direction="northbound")
+    create_route("Red Line", list(reversed(RED_LINE)), station_map, direction="southbound")
+
+    create_route("Gold Line", GOLD_LINE, station_map, direction="northbound")
+    create_route("Gold Line", list(reversed(GOLD_LINE)), station_map, direction="southbound")
+
+    create_route("Blue Line", BLUE_LINE, station_map, direction="northbound")
+    create_route("Blue Line", list(reversed(BLUE_LINE)), station_map, direction="southbound")
+
+    create_route("Green Line", GREEN_LINE, station_map, direction="northbound")
+    create_route("Green Line", list(reversed(GREEN_LINE)), station_map, direction="southbound")
 
     print("\n✅ Done populating all routes.")

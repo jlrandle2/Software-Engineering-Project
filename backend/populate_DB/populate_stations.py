@@ -52,21 +52,28 @@ stations = [
 ]
 
 def create_station(name, lat, lon):
+    # check if exists
+    existing = requests.get(f"{BASE_URL}/stations").json()
+
+    for s in existing:
+        if s["station_name"] == name:
+            print(f"⏭️ Skipped duplicate: {name}")
+            return
+
     res = requests.post(
         f"{BASE_URL}/stations",
         json={
             "station_name": name,
             "latitude": lat,
             "longitude": lon,
-            "status": "active"
+            "accessibility_features": True
         }
     )
 
     if res.status_code == 200:
         print(f"✅ Created: {name}")
     else:
-        print(f"⚠️ Skipped/Failed: {name} → {res.text}")
-
+        print(f"⚠️ Failed: {name} → {res.text}")
 
 if __name__ == "__main__":
     print("Populating stations...\n")

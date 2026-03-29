@@ -20,7 +20,7 @@ class Station(Base):
     __tablename__ = "stations"
 
     station_id = Column(Integer, primary_key=True, index=True)
-    station_name = Column(String(100), nullable=False)
+    station_name = Column(String(100), nullable=False, unique=True)
     latitude = Column(DECIMAL(10, 8), nullable=False)
     longitude = Column(DECIMAL(11, 8), nullable=False)
     accessibility_features = Column(Boolean, default=False, nullable=False)

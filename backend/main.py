@@ -1,11 +1,18 @@
+import db
 from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from sqlalchemy import func
+
+from datetime import datetime, timedelta
+
 
 from fastapi.middleware.cors import CORSMiddleware
 
 
 from db import Base, engine, get_db
+
+
 from models import User, Station, Route, RouteStop, SystemAlert
 from schemas import (
     UserCreate, UserOut, UserUpdate,
@@ -200,7 +207,7 @@ def get_route_stops(route_id: int, db: Session = Depends(get_db)):
 
 
 # ---------------- System Alerts ----------------
-@app.post("/alerts", response_model=AlertOut)
+@app.post("/alerts")
 def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     # verify station exists
     station = db.query(Station).filter(Station.station_id == payload.station_id).first()
@@ -226,28 +233,62 @@ def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     return alert
 
 
+# @app.get("/alerts", response_model=list[AlertOut])
+# def list_alerts(
+#     active_only: bool = Query(True),
+#     station_id: int | None = Query(None),
+#     alert_type: str | None = Query(None),
+#     reported_by: int | None = Query(None),
+#     db: Session = Depends(get_db)
+# ):
+#     q = db.query(SystemAlert)
+#     if active_only:
+#         q = q.filter(SystemAlert.is_active == True)  # noqa: E712
+#     if station_id is not None:
+#         q = q.filter(SystemAlert.station_id == station_id)
+#     if alert_type is not None:
+#         q = q.filter(SystemAlert.alert_type == alert_type)
+#     if reported_by is not None:
+#         q = q.filter(SystemAlert.reported_by == reported_by)
+#     alerts = q.order_by(SystemAlert.created_at.desc()).all()
+
+#     result = []
+#     for alert in alerts:
+#         station = db.query(Station).filter(Station.station_id == alert.station_id).first()
+
+#         result.append({
+#             "alert_id": alert.alert_id,
+#             "station_id": alert.station_id,
+#             "station_name": station.station_name if station else None,
+#             "alert_type": alert.alert_type,
+#             "description": alert.description,
+#             "reported_by": alert.reported_by,
+#             "is_active": alert.is_active,
+#             "created_at": alert.created_at
+#         })
+
+#     return result
+
 @app.get("/alerts", response_model=list[AlertOut])
-def list_alerts(
-    active_only: bool = Query(True),
-    station_id: int | None = Query(None),
-    alert_type: str | None = Query(None),
-    reported_by: int | None = Query(None),
-    db: Session = Depends(get_db)
-):
-    q = db.query(SystemAlert)
-    if active_only:
-        q = q.filter(SystemAlert.is_active == True)  # noqa: E712
+def get_alerts(station_id: int | None = None, db: Session = Depends(get_db)):
+
+    two_hours_ago = datetime.now() - timedelta(hours=2)
+
+    q = db.query(SystemAlert).filter(
+        SystemAlert.created_at >= two_hours_ago,
+        SystemAlert.is_active == True
+    )
+
     if station_id is not None:
         q = q.filter(SystemAlert.station_id == station_id)
-    if alert_type is not None:
-        q = q.filter(SystemAlert.alert_type == alert_type)
-    if reported_by is not None:
-        q = q.filter(SystemAlert.reported_by == reported_by)
+
     alerts = q.order_by(SystemAlert.created_at.desc()).all()
 
     result = []
     for alert in alerts:
-        station = db.query(Station).filter(Station.station_id == alert.station_id).first()
+        station = db.query(Station).filter(
+            Station.station_id == alert.station_id
+        ).first()
 
         result.append({
             "alert_id": alert.alert_id,
@@ -261,13 +302,6 @@ def list_alerts(
         })
 
     return result
-
-@app.get("/alerts/{alert_id}", response_model=AlertOut)
-def get_alert(alert_id: int, db: Session = Depends(get_db)):
-    alert = db.query(SystemAlert).filter(SystemAlert.alert_id == alert_id).first()
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found.")
-    return alert
 
 @app.put("/alerts/{alert_id}", response_model=AlertOut)
 def update_alert(alert_id: int, payload: AlertUpdate, db: Session = Depends(get_db)):

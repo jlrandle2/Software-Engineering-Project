@@ -40,7 +40,8 @@ class ApiService {
       }),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      print("CREATE ALERT STATUS: ${response.statusCode}");
       throw Exception('Failed to create alert');
     }
   }

@@ -165,7 +165,7 @@ Widget build(BuildContext context) {
             const SizedBox(height: 10),
 
             /// SEARCH RESULTS
-            if (searchController.text.isNotEmpty)
+            if (filteredStations.isNotEmpty && searchController.text.isNotEmpty)
               Container(
                 constraints: const BoxConstraints(maxHeight: 200),
                 child: ListView.builder(
@@ -224,7 +224,7 @@ Widget build(BuildContext context) {
             : alerts.isEmpty
                 ? const Text("No alerts right now")
                 : Column(
-                    children: alerts.map((alert) {
+                    children: List.from(alerts).map((alert) {
                       return Card(
                         color: Colors.red[50],
                         child: ListTile(
@@ -239,6 +239,11 @@ Widget build(BuildContext context) {
                               "📍 ${alert['station_name']}",
                               style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                             ),
+                            if (alert['created_at'] != null)
+                              Text(
+                                formatTime(alert['created_at']),
+                                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                              ),
                         ],
                       ),
                         ),
@@ -438,6 +443,7 @@ Widget build(BuildContext context) {
 }
 
 
+
 Widget _recentTripTile() {
   return Card(
     color: AppColors.cardBackground,
@@ -452,5 +458,18 @@ Widget _recentTripTile() {
     ),
   );
 }
+
+String formatTime(String timestamp) {
+  final dateTime = DateTime.parse(timestamp).toLocal();
+  final now = DateTime.now();
+  final diff = now.difference(dateTime);
+
+  if (diff.inMinutes < 1) return "just now";
+  if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+  if (diff.inHours < 24) return "${diff.inHours} hr ago";
+
+  return "${dateTime.month}/${dateTime.day}";
+}
+
 }
 

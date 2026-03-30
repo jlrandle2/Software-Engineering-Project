@@ -8,6 +8,8 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr
+    password: str
+    role: str = "rider"
     preferred_station_id: Optional[int] = None
     safety_alerts_enabled: bool = True
 
@@ -21,12 +23,17 @@ class UserOut(BaseModel):
     user_id: int
     username: str
     email: str
+    role: str
     preferred_station_id: Optional[int]
     safety_alerts_enabled: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
 
 # ---------- Stations ----------
@@ -125,3 +132,7 @@ class AlertOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class VoteCreate(BaseModel):
+    user_id: int
+    vote_type: int  # +1 or -1

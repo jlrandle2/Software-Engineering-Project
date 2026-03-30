@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'utils/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/signup_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const TransitSenseApp());
@@ -33,7 +36,66 @@ class _TransitSenseAppState extends State<TransitSenseApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
-      home: HomeScreen(toggleTheme: toggleTheme, isDarkMode: isDarkMode),
+      // 🔥 CHANGED THIS LINE ONLY
+      home: AuthGate(
+        toggleTheme: toggleTheme,
+        isDarkMode: isDarkMode,
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+// =====================================================
+// 🔥 NEW: AUTH GATE (DO NOT REMOVE)
+// =====================================================
+
+class AuthGate extends StatelessWidget {
+  final Function(bool) toggleTheme;
+  final bool isDarkMode;
+
+  const AuthGate({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
+
+  Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("user_id");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int?>(
+      future: getUserId(),
+      builder: (context, snapshot) {
+
+        // 🔄 loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // ❌ no user → go to signup
+        if (snapshot.data == null) {
+        return LoginScreen(
+          toggleTheme: toggleTheme,
+          isDarkMode: isDarkMode,
+        );
+      }
+
+        // ✅ user exists → go to home
+        return HomeScreen(
+          toggleTheme: toggleTheme,
+          isDarkMode: isDarkMode,
+        );
+      },
     );
   }
 }

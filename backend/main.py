@@ -7,12 +7,22 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from datetime import datetime, timedelta
 
+from models import User, Station, Route, RouteStop, SystemAlert, AlertVote
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import Base, engine, get_db
 from models import User, Station, Route, RouteStop, SystemAlert
 from schemas import *
+import schemas
+import models      # 🔥 ADD THIS (you’re missing it)
+from sqlalchemy import func 
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
 
 # =========================
 # APP SETUP
@@ -54,7 +64,14 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     if exists:
         raise HTTPException(409, "Username or email already exists")
 
-    user = User(**payload.dict())
+    user = User(
+    username=payload.username,
+    email=payload.email,
+    role=payload.role,
+    password=hash_password(payload.password),  # 🔥 HASHED
+)
+    
+
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -70,6 +87,25 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "User not found")
 
     return user
+
+
+@app.post("/login")
+def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(
+        models.User.username == payload.username
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not pwd_context.verify(payload.password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return {
+        "user_id": user.user_id,
+        "username": user.username,
+        "role": user.role
+    }
 
 
 # =========================================================
@@ -201,6 +237,7 @@ def create_alert(payload: AlertCreate, db: Session = Depends(get_db)):
         direction=payload.direction,
         alert_type=payload.alert_type,
         description=payload.description,
+        reported_by=payload.reported_by,
         is_official=payload.is_official,
         is_active=True
     )
@@ -235,6 +272,10 @@ def get_alerts(station_id: int | None = None, db: Session = Depends(get_db)):
             Station.station_id == alert.station_id
         ).first()
 
+        score = db.query(func.coalesce(func.sum(AlertVote.vote_type), 0)).filter(
+            AlertVote.alert_id == alert.alert_id
+        ).scalar()
+
         result.append({
             "alert_id": alert.alert_id,
             "alert_type": alert.alert_type,
@@ -244,6 +285,8 @@ def get_alerts(station_id: int | None = None, db: Session = Depends(get_db)):
             "direction": alert.direction,
             "created_at": alert.created_at,
             "is_official": alert.is_official,
+            "score": score,
+            "user_vote": 0
         })
 
     return result
@@ -262,3 +305,34 @@ def delete_alert(alert_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Deleted"}
+
+
+@app.post("/alerts/{alert_id}/vote")
+def vote_alert(alert_id: int, payload: VoteCreate, db: Session = Depends(get_db)):
+
+    alert = db.query(SystemAlert).filter(SystemAlert.alert_id == alert_id).first()
+    if not alert:
+        raise HTTPException(404, "Alert not found")
+
+    existing = db.query(AlertVote).filter(
+        AlertVote.user_id == payload.user_id,
+        AlertVote.alert_id == alert_id
+    ).first()
+
+    if not existing:
+        vote = AlertVote(
+            user_id=payload.user_id,
+            alert_id=alert_id,
+            vote_type=payload.vote_type
+        )
+        db.add(vote)
+
+    elif existing.vote_type == payload.vote_type:
+        db.delete(existing)
+
+    else:
+        existing.vote_type = payload.vote_type
+
+    db.commit()
+
+    return {"message": "Vote updated"}

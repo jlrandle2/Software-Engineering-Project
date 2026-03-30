@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = "http://localhost:8000";
@@ -33,6 +34,8 @@ class ApiService {
     required String alertType,
     required String description,
     required bool isOfficial,
+    required int reportedBy,
+
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/alerts'),
@@ -44,6 +47,7 @@ class ApiService {
         "alert_type": alertType,
         "description": description,
         "is_official": isOfficial,
+        "reported_by": reportedBy,
       }),
     );
 
@@ -99,4 +103,63 @@ class ApiService {
     );
     return jsonDecode(res.body);
   }
+
+
+  // =========================
+  // CREATE USER
+  // =========================
+  static Future<Map<String, dynamic>?> createUser(String username, String email, String role, String password) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/users"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "username": username,
+      "email": email,
+      "password": password, 
+      "role": role,
+    }),
+  );
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    return jsonDecode(response.body);
+  } else {
+    print("STATUS: ${response.statusCode}");
+    print("BODY: ${response.body}");
+    throw Exception("Create user failed");
+  }
+}
+
+
+// GET SAVED USER ID
+
+  static Future<int?> getSavedUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("user_id");
+  }
+
+  // LOGIN 
+
+  static Future<Map<String, dynamic>?> login(
+  String username,
+  String password,
+) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/login"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "username": username,
+      "password": password,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    print("LOGIN ERROR: ${response.body}");
+    return null;
+  }
+
+
+  
+}
 }

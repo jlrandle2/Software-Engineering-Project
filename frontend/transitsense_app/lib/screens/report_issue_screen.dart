@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportIssueScreen extends StatefulWidget {
   final bool isAdmin;
@@ -14,24 +15,21 @@ class ReportIssueScreen extends StatefulWidget {
 }
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
+
   // =========================
   // STATE
   // =========================
 
-  // Selected line
   String? selectedLine;
 
-  // Stations for the selected line
   List<dynamic> stations = [];
   int? selectedStationId;
   bool isLoadingStations = false;
 
-  // Directions for the selected line + station
   List<String> directions = [];
   String? selectedDirection;
   bool isLoadingDirections = false;
 
-  // Issue type
   String selectedIssue = "Delay";
 
   final List<String> issueTypes = [
@@ -42,7 +40,6 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     "Other",
   ];
 
-  // Description input
   final TextEditingController descriptionController = TextEditingController();
 
   // =========================
@@ -59,7 +56,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   }
 
   // =========================
-  // FETCH STATIONS FOR LINE
+  // FETCH STATIONS
   // =========================
 
   void fetchStationsForLine(String line) async {
@@ -113,7 +110,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   }
 
   // =========================
-  // SUBMIT
+  // SUBMIT REPORT
   // =========================
 
   void submitReport() async {
@@ -128,6 +125,16 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final int? userId = prefs.getInt("user_id");
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("User not found. Please sign up again.")),
+        );
+        return;
+      }
+
       await ApiService.createAlert(
         stationId: selectedStationId!,
         routeName: selectedLine!,
@@ -135,6 +142,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         alertType: selectedIssue,
         description: descriptionController.text.trim(),
         isOfficial: widget.isAdmin,
+        reportedBy: userId,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,38 +173,28 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             Text(
               widget.isAdmin
                   ? "Create an Official Alert"
                   : "Report a Transit Issue",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
 
             // ISSUE TYPE
-            const Text(
-              "Issue Type",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Issue Type", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             DropdownButtonFormField<String>(
               value: selectedIssue,
               items: issueTypes.map((issue) {
-                return DropdownMenuItem<String>(
-                  value: issue,
-                  child: Text(issue),
-                );
+                return DropdownMenuItem(value: issue, child: Text(issue));
               }).toList(),
               onChanged: (value) {
                 if (value == null) return;
-                setState(() {
-                  selectedIssue = value;
-                });
+                setState(() => selectedIssue = value);
               },
               decoration: _inputDecoration(),
             ),
@@ -204,28 +202,18 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 20),
 
             // LINE
-            const Text(
-              "Line",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Line", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             DropdownButtonFormField<String>(
               value: selectedLine,
               hint: const Text("Select a line"),
               items: getAllLines().map((line) {
-                return DropdownMenuItem<String>(
-                  value: line,
-                  child: Text(line),
-                );
+                return DropdownMenuItem(value: line, child: Text(line));
               }).toList(),
               onChanged: (line) {
                 if (line == null) return;
-
-                setState(() {
-                  selectedLine = line;
-                });
-
+                setState(() => selectedLine = line);
                 fetchStationsForLine(line);
               },
               decoration: _inputDecoration(),
@@ -234,10 +222,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 20),
 
             // STATION
-            const Text(
-              "Station",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Station", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             isLoadingStations
@@ -246,18 +231,14 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     value: selectedStationId,
                     hint: const Text("Select a station"),
                     items: stations.map<DropdownMenuItem<int>>((station) {
-                      return DropdownMenuItem<int>(
+                      return DropdownMenuItem(
                         value: station['station_id'],
                         child: Text(station['station_name']),
                       );
                     }).toList(),
                     onChanged: (value) {
                       if (value == null || selectedLine == null) return;
-
-                      setState(() {
-                        selectedStationId = value;
-                      });
-
+                      setState(() => selectedStationId = value);
                       fetchDirections(selectedLine!, value);
                     },
                     decoration: _inputDecoration(),
@@ -266,10 +247,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 20),
 
             // DIRECTION
-            const Text(
-              "Direction",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Direction", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             isLoadingDirections
@@ -278,16 +256,14 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     value: selectedDirection,
                     hint: const Text("Select direction"),
                     items: directions.map((dir) {
-                      return DropdownMenuItem<String>(
+                      return DropdownMenuItem(
                         value: dir,
                         child: Text(formatDirection(dir)),
                       );
                     }).toList(),
                     onChanged: (value) {
                       if (value == null) return;
-                      setState(() {
-                        selectedDirection = value;
-                      });
+                      setState(() => selectedDirection = value);
                     },
                     decoration: _inputDecoration(),
                   ),
@@ -295,10 +271,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 28),
 
             // DESCRIPTION
-            const Text(
-              "Description",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Description", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             TextField(

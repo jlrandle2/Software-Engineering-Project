@@ -295,10 +295,63 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Center(
-                    child: Text("Map Preview\nTap to open map"),
+                  child: ClipRRect(
+  borderRadius: BorderRadius.circular(16),
+  child: Stack(
+    children: [
+
+      /// MAP IMAGE
+      Positioned.fill(
+        child: Image.asset(
+          'assets/images/MARTA-train-map.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+
+      /// DARK GRADIENT OVERLAY (makes text readable)
+      Positioned.fill(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.center,
+              colors: [
+                Colors.black.withOpacity(0.5),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+      ),
+
+                      /// LABEL
+                      const Positioned(
+                        bottom: 12,
+                        left: 16,
+                        child: Text(
+                          "Preview · Tap to Expand",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                      /// OPTIONAL ICON (makes it feel polished)
+                      const Positioned(
+                        bottom: 10,
+                        right: 12,
+                        child: Icon(
+                          Icons.open_in_full,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
               ),
             ],
           ),

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
 
 class SettingsScreen extends StatefulWidget {
   final Function(bool) toggleTheme;
@@ -18,6 +23,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool notificationsEnabled = true;
 
+  String username = "Loading...";
+  String role = "rider";
+
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      username = prefs.getString("username") ?? "Unknown";
+      role = prefs.getString("role") ?? "rider";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -31,12 +54,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         children: [
 
+          /// 🔥 USER INFO (NEW)
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.person),
+              title: Text(username),
+              subtitle: Text("Role: ${role.toUpperCase()}"),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           /// NOTIFICATIONS
           Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: SwitchListTile(
               title: const Text("Enable Notifications"),
               subtitle: const Text("Receive alerts about delays and updates"),
@@ -56,12 +92,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: SwitchListTile(
               title: const Text("Dark Mode"),
               subtitle: const Text("Toggle dark theme"),
               value: widget.isDarkMode,
-
               onChanged: (value) {
                 widget.toggleTheme(value);
               },
@@ -75,13 +109,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: ListTile(
               leading: const Icon(Icons.language),
               title: const Text("Language"),
               subtitle: const Text("English"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -99,19 +131,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text("About TransitSense"),
               subtitle: const Text("Learn more about the app"),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
               onTap: () {
                 showAboutDialog(
                   context: context,
                   applicationName: "TransitSense",
                   applicationVersion: "1.0.0",
                   applicationLegalese: "© 2026 TransitSense",
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Sign Out"),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
+                if (!context.mounted) return;
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LoginScreen(
+                      toggleTheme: widget.toggleTheme,
+                      isDarkMode: widget.isDarkMode,
+                    ),
+                  ),
+                  (route) => false,
                 );
               },
             ),

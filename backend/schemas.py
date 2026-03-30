@@ -94,10 +94,13 @@ class RouteOut(BaseModel):
 # ---------- Alerts ----------
 class AlertCreate(BaseModel):
     station_id: int
+    route_name: str | None = None   
+    direction: str | None = None    
     alert_type: str = Field(min_length=1, max_length=50)
     description: Optional[str] = None
     reported_by: Optional[int] = None
     is_active: bool = True
+    is_official: bool = False
 
 class AlertUpdate(BaseModel):
     station_id: Optional[int] = None
@@ -111,11 +114,14 @@ class AlertOut(BaseModel):
     alert_id: int
     station_id: Optional[int]
     station_name: Optional[str]  # 👈 ADD THIS
+    route_name: str | None   # 👈 ADD
+    direction: str | None    # 👈 ADD
     alert_type: str
     description: Optional[str]
     reported_by: Optional[int]
     is_active: bool
     created_at: datetime
+    is_official: bool = False
 
     class Config:
         from_attributes = True

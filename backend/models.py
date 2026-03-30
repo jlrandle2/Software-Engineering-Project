@@ -4,6 +4,8 @@ from sqlalchemy import (
 from sqlalchemy.sql import func
 from db import Base
 
+from datetime import datetime
+
 
 class User(Base):
     __tablename__ = "users"
@@ -47,9 +49,16 @@ class SystemAlert(Base):
     __tablename__ = "system_alerts"
 
     alert_id = Column(Integer, primary_key=True, index=True)
-    station_id = Column(Integer, ForeignKey("stations.station_id"), nullable=False)
-    alert_type = Column(String(50), nullable=False)
-    description = Column(Text, nullable=True)
+    station_id = Column(Integer, ForeignKey("stations.station_id"))
+    
+    route_name = Column(String(50), nullable=True)   
+    direction = Column(String(20), nullable=True)    
+
+    alert_type = Column(String(50))
+    description = Column(Text)
     reported_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    is_official = Column(Boolean, default=False)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

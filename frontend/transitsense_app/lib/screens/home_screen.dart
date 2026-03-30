@@ -1,3 +1,4 @@
+// SAME IMPORTS (unchanged)
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import 'route_search_screen.dart';
@@ -6,7 +7,6 @@ import 'settings_screen.dart';
 import 'report_issue_screen.dart';
 import '../services/transit_service.dart';
 import '../services/api_service.dart';
-
 
 class HomeScreen extends StatefulWidget {
   final Function(bool) toggleTheme;
@@ -24,385 +24,346 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
-List<dynamic> alerts = [];
-bool isLoadingAlerts = true;
-bool showAlerts = true;
+  bool isAdmin = false;
 
-List<dynamic> stations = [];
-int? selectedStationId;
-bool isLoadingStations = true;
+  List<dynamic> alerts = [];
+  bool isLoadingAlerts = true;
+  bool showAlerts = true;
 
-TextEditingController searchController = TextEditingController();
-List<dynamic> filteredStations = [];
+  List<dynamic> stations = [];
+  List<dynamic> filteredStations = [];
 
-@override
-void initState() {
-  super.initState();
-  fetchStations();
-}
+  int? selectedStationId;
 
-void filterStations(String query) {
-  setState(() {
-    filteredStations = stations.where((station) {
-      return station['station_name']
-          .toLowerCase()
-          .contains(query.toLowerCase());
-    }).toList();
-  });
-}
+  final TextEditingController searchController = TextEditingController();
 
-void fetchAlerts() async {
-  print("FETCHING ALERTS FOR STATION: $selectedStationId");
-
-  try {
-    setState(() {
-      isLoadingAlerts = true;
-    });
-
-    // 👇 THIS IS THE KEY CHANGE
-    var data = await ApiService.getAlerts(selectedStationId);
-
-    print("ALERTS: $data");
-
-    setState(() {
-      alerts = data;
-      isLoadingAlerts = false;
-    });
-  } catch (e) {
-    print("ALERT ERROR: $e");
-    setState(() {
-      isLoadingAlerts = false;
-    });
+  @override
+  void initState() {
+    super.initState();
+    fetchStations();
   }
-}
 
-void fetchStations() async {
-  try {
-    var data = await ApiService.getStations();
+  void fetchStations() async {
+    try {
+      final data = await ApiService.getStations();
 
-    print("STATIONS:");
-    for (var s in data) {
-      print("${s['station_name']} → ${s['station_id']}");
+      setState(() {
+        stations = data;
+        filteredStations = data;
+      });
+
+      fetchAlerts();
+
+    } catch (e) {
+      print("STATION ERROR: $e");
     }
-    setState(() {
-      stations = data;
-      filteredStations = stations;
-      isLoadingStations = false;
+  }
 
-      // set default if not selected yet
-      if (selectedStationId == null) {
-        fetchAlerts();
-      }
-    });
-  } catch (e) {
-    print("STATION ERROR: $e");
+  void fetchAlerts() async {
+    try {
+      setState(() => isLoadingAlerts = true);
+
+      final data = await ApiService.getAlerts(selectedStationId);
+
+      setState(() {
+        alerts = data;
+        isLoadingAlerts = false;
+      });
+
+    } catch (e) {
+      print("ALERT ERROR: $e");
+      setState(() => isLoadingAlerts = false);
+    }
+  }
+
+  void filterStations(String query) {
     setState(() {
-      isLoadingStations = false;
+      filteredStations = stations.where((station) {
+        return station['station_name']
+            .toLowerCase()
+            .contains(query.toLowerCase());
+      }).toList();
     });
   }
-}
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      backgroundColor: AppColors.primaryBlue,
-      title: const Text("TransitSense"),
-      actions: const [
-        Icon(Icons.person),
-        SizedBox(width: 12),
-      ],
-    ),
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryBlue,
+        title: const Text("TransitSense"),
+      ),
 
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
 
-    body: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-        child: Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            const Text(
-              "Home",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-
-            const SizedBox(height: 12),
-
-
-            /// STATION SEARCH
-            TextField(
-              controller: searchController,
-              onChanged: (value) {
-              filterStations(value);
-
-              if (value.isEmpty) {
-                setState(() {
-                  selectedStationId = null;
-                });
-                fetchAlerts();
-              }
-            },
-
-              decoration: InputDecoration(
-                hintText: "Search station",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            /// SEARCH RESULTS
-            if (filteredStations.isNotEmpty && searchController.text.isNotEmpty)
-              Container(
-                constraints: const BoxConstraints(maxHeight: 200),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: filteredStations.length,
-                  itemBuilder: (context, index) {
-                    final station = filteredStations[index];
-
-                    return ListTile(
-                      title: Text("${station['station_name']}"),
-                      onTap: () {
-                        setState(() {
-                          print("TAPPED STATION: ${station['station_id']}");
-                          selectedStationId = station['station_id'];
-                          searchController.text = station['station_name'];
-                          filteredStations = [];
-                        });
-
-                        fetchAlerts();
-                      },
-                    );
-                  },
-                ),
+              const Text(
+                "Home",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 16),
 
-            GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showAlerts = !showAlerts;
-                    });
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // MODE TOGGLE
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Mode:", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Row(
                     children: [
-                      const Text(
-                        "Live Alerts",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const Text("Rider"),
+                      Switch(
+                        value: isAdmin,
+                        onChanged: (val) {
+                          setState(() {
+                            isAdmin = val;
+                          });
+                        },
                       ),
-                      Icon(
-                        showAlerts ? Icons.expand_less : Icons.expand_more,
+                      const Text("Admin"),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // SEARCH
+              TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  filterStations(value);
+
+                  if (value.isEmpty) {
+                    selectedStationId = null;
+                    fetchAlerts();
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: "Search station",
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              if (filteredStations.isNotEmpty && searchController.text.isNotEmpty)
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: filteredStations.length,
+                    itemBuilder: (context, index) {
+
+                      final station = filteredStations[index];
+
+                      return ListTile(
+                        title: Text(station['station_name']),
+                        onTap: () {
+                          setState(() {
+                            selectedStationId = station['station_id'];
+                            searchController.text = station['station_name'];
+                            filteredStations = [];
+                          });
+
+                          fetchAlerts();
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+              const SizedBox(height: 16),
+
+              // ALERT HEADER
+              GestureDetector(
+                onTap: () => setState(() => showAlerts = !showAlerts),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Live Alerts",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Icon(showAlerts ? Icons.expand_less : Icons.expand_more),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ALERTS
+              if (showAlerts)
+                isLoadingAlerts
+                    ? const CircularProgressIndicator()
+                    : alerts.isEmpty
+                        ? const Text("No alerts right now")
+                        : Column(
+                            children: alerts.map((alert) {
+
+                              final isOfficial = alert['is_official'] == true;
+
+                              return Card(
+                                color: isOfficial ? Colors.blue[50] : Colors.red[50],
+
+                                child: ListTile(
+
+                                  leading: Icon(
+                                    isOfficial ? Icons.verified : Icons.warning,
+                                    color: isOfficial ? Colors.blue : Colors.red,
+                                  ),
+
+                                  trailing: isAdmin
+                                      ? IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () async {
+                                            await ApiService.deleteAlert(alert['alert_id']);
+                                            fetchAlerts();
+                                          },
+                                        )
+                                      : null,
+
+                                  title: Text(alert['alert_type'] ?? "Alert"),
+
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+
+                                      if (isOfficial)
+                                        const Text(
+                                          "Official Alert",
+                                          style: TextStyle(fontSize: 11, color: Colors.blue),
+                                        ),
+
+                                      Text(alert['description'] ?? "No description"),
+
+                                      if (alert['station_name'] != null)
+                                        Text("📍 ${alert['station_name']}"),
+
+                                      if (alert['route_name'] != null &&
+                                          alert['direction'] != null)
+                                        Text(
+                                          "🚆 ${alert['route_name']} • ${formatDirection(alert['direction'])}",
+                                        ),
+
+                                      if (alert['created_at'] != null)
+                                        Text(
+                                          formatTime(alert['created_at']),
+                                          style: const TextStyle(fontSize: 11),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+
+                            }).toList(),
+                          ),
+
+              const SizedBox(height: 24),
+
+              const Text(
+                "Map",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 10),
+
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TransitMapScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text("Map Preview\nTap to open map"),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-
-        const SizedBox(height: 10),
-
-        if (showAlerts)
-          isLoadingAlerts
-            ? const CircularProgressIndicator()
-            : alerts.isEmpty
-                ? const Text("No alerts right now")
-                : Column(
-                    children: List.from(alerts).map((alert) {
-                      return Card(
-                        color: Colors.red[50],
-                        child: ListTile(
-                          leading: const Icon(Icons.warning, color: Colors.red),
-                          title: Text(alert['alert_type']),
-                          subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(alert['description'] ?? "No description"),
-                          if (alert['station_name'] != null)
-                            Text(
-                              "📍 ${alert['station_name']}",
-                              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                            ),
-                            if (alert['created_at'] != null)
-                              Text(
-                                formatTime(alert['created_at']),
-                                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                              ),
-                        ],
-                      ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-
-          const SizedBox(height: 24),
-
-            const Text(
-              "Map",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-
-            const SizedBox(height: 10),
-
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TransitMapScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Text(
-                    "Map Preview\nTap to open map",
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
-    ),
 
+      bottomSheet: _buildCTA(),
+      bottomNavigationBar: _buildNavBar(),
+    );
+  }
 
-    /// STICKY CTA BUTTON
-    bottomSheet: Container(
+  Widget _buildCTA() {
+    return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-          )
-        ],
-      ),
-
-
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
         onPressed: () async {
           try {
-
-
             await TransitService.startTrip(
               route: "Red Line",
               startStation: "North Ave",
               destination: "Midtown",
             );
 
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Trip tracking started")),
-            );
-
-
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const RouteSearchScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const RouteSearchScreen()),
             );
-
-
           } catch (e) {
-
-
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Error starting trip")),
             );
-
-
           }
-
-
         },
-        child: const Text(
-          "Plan Route",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: const Text("Plan Route"),
       ),
-    ),
+    );
+  }
 
-
-    /// BOTTOM NAVIGATION
-    bottomNavigationBar: BottomNavigationBar(
+  Widget _buildNavBar() {
+    return BottomNavigationBar(
       currentIndex: 0,
       selectedItemColor: AppColors.primaryBlue,
-      unselectedItemColor: Colors.grey,
       type: BottomNavigationBarType.fixed,
-
-
       onTap: (index) async {
 
-
         if (index == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TransitMapScreen(),
-            ),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const TransitMapScreen()));
         }
-
 
         if (index == 2) {
           await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ReportIssueScreen(),
-          ),
-        );
-
-        fetchAlerts(); //
+            context,
+            MaterialPageRoute(
+              builder: (_) => ReportIssueScreen(isAdmin: isAdmin),
+            ),
+          );
+          fetchAlerts();
         }
-
 
         if (index == 3) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SettingsScreen(
+              builder: (_) => SettingsScreen(
                 toggleTheme: widget.toggleTheme,
                 isDarkMode: widget.isDarkMode,
               ),
@@ -411,65 +372,27 @@ Widget build(BuildContext context) {
         }
       },
 
-
       items: const [
-
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home",
-        ),
-
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.map),
-          label: "Map",
-        ),
-
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.report),
-          label: "Report",
-        ),
-
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: "Settings",
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.map), label: "Map"),
+        BottomNavigationBarItem(icon: Icon(Icons.report), label: "Report"),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],
-    ),
-  );
+    );
+  }
+
+  String formatDirection(String dir) {
+    return dir[0].toUpperCase() + dir.substring(1);
+  }
+
+  String formatTime(String timestamp) {
+    final dateTime = DateTime.parse(timestamp).toLocal();
+    final diff = DateTime.now().difference(dateTime);
+
+    if (diff.inMinutes < 1) return "just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hr ago";
+
+    return "${dateTime.month}/${dateTime.day}";
+  }
 }
-
-
-
-Widget _recentTripTile() {
-  return Card(
-    color: AppColors.cardBackground,
-    elevation: 2,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const ListTile(
-      leading: Icon(Icons.directions_bus),
-      title: Text("North Ave → Midtown"),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16),
-    ),
-  );
-}
-
-String formatTime(String timestamp) {
-  final dateTime = DateTime.parse(timestamp).toLocal();
-  final now = DateTime.now();
-  final diff = now.difference(dateTime);
-
-  if (diff.inMinutes < 1) return "just now";
-  if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
-  if (diff.inHours < 24) return "${diff.inHours} hr ago";
-
-  return "${dateTime.month}/${dateTime.day}";
-}
-
-}
-

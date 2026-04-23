@@ -146,7 +146,7 @@ class TransitMapScreen extends StatelessWidget {
               if (alerts.isEmpty)
                 const Text("No alerts right now"),
 
-              ...alerts.map((a) => Text("🚨 $a")).toList(),
+              ...alerts.map((a) => Text("🚨 $a")),
 
             ],
           ),

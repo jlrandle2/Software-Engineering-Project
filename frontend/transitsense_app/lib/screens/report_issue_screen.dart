@@ -188,7 +188,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 8),
 
             DropdownButtonFormField<String>(
-              value: selectedIssue,
+              initialValue: selectedIssue,
               items: issueTypes.map((issue) {
                 return DropdownMenuItem(value: issue, child: Text(issue));
               }).toList(),
@@ -206,7 +206,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             const SizedBox(height: 8),
 
             DropdownButtonFormField<String>(
-              value: selectedLine,
+              initialValue: selectedLine,
               hint: const Text("Select a line"),
               items: getAllLines().map((line) {
                 return DropdownMenuItem(value: line, child: Text(line));
@@ -228,7 +228,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             isLoadingStations
                 ? const CircularProgressIndicator()
                 : DropdownButtonFormField<int>(
-                    value: selectedStationId,
+                    initialValue: selectedStationId,
                     hint: const Text("Select a station"),
                     items: stations.map<DropdownMenuItem<int>>((station) {
                       return DropdownMenuItem(
@@ -253,7 +253,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             isLoadingDirections
                 ? const CircularProgressIndicator()
                 : DropdownButtonFormField<String>(
-                    value: selectedDirection,
+                    initialValue: selectedDirection,
                     hint: const Text("Select direction"),
                     items: directions.map((dir) {
                       return DropdownMenuItem(

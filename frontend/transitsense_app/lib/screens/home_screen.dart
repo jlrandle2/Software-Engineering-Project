@@ -7,6 +7,7 @@ import 'settings_screen.dart';
 import 'report_issue_screen.dart';
 import '../services/transit_service.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(bool) toggleTheme;
@@ -25,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
 
   bool isAdmin = false;
+  bool accountIsAdmin = false;
 
   List<dynamic> alerts = [];
   bool isLoadingAlerts = true;
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     fetchStations();
+    loadUserRole();
   }
 
   void fetchStations() async {
@@ -59,9 +62,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void fetchAlerts() async {
+  void loadUserRole() async {
+  final prefs = await SharedPreferences.getInstance();
+  final role = prefs.getString('role') ?? 'rider';
+
+  setState(() {
+    accountIsAdmin = role == 'admin';
+    isAdmin = false;
+  });
+}
+
+  Future<void> fetchAlerts() async {
     try {
-      setState(() => isLoadingAlerts = true);
+      if (alerts.isEmpty) {
+          setState(() => isLoadingAlerts = true);
+        }
 
       final data = await ApiService.getAlerts(selectedStationId);
 
@@ -111,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
 
               // MODE TOGGLE
+              if (accountIsAdmin)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -229,8 +245,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? IconButton(
                                           icon: const Icon(Icons.delete, color: Colors.red),
                                           onPressed: () async {
-                                            await ApiService.deleteAlert(alert['alert_id']);
-                                            fetchAlerts();
+                                            try {
+                                              print("DELETING ALERT ID: ${alert['alert_id']}");
+                                              await ApiService.deleteAlert(alert['alert_id']);
+                                              await fetchAlerts();
+                                            } catch (e) {
+                                              print("DELETE ERROR: $e");
+                                            }
                                           },
                                         )
                                       : null,
@@ -248,6 +269,54 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
 
                                       Text(alert['description'] ?? "No description"),
+
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.thumb_up, size: 20),
+                                    onPressed: () async {
+                                      try {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        final userId = prefs.getInt('user_id') ?? 0;
+
+                                        await ApiService.voteAlert(
+                                          alertId: alert['alert_id'],
+                                          userId: userId,
+                                          voteType: 1,
+                                        );
+
+                                        await fetchAlerts();
+                                      } catch (e) {
+                                        print("UPVOTE ERROR: $e");
+                                      }
+                                    },
+                                  ),
+
+                                  Text("${alert['score'] ?? 0}"),
+
+                                  const SizedBox(width: 12),
+
+                                  IconButton(
+                                    icon: const Icon(Icons.thumb_down, size: 20),
+                                    onPressed: () async {
+                                      try {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        final userId = prefs.getInt('user_id') ?? 0;
+
+                                        await ApiService.voteAlert(
+                                          alertId: alert['alert_id'],
+                                          userId: userId,
+                                          voteType: -1,
+                                        );
+
+                                        await fetchAlerts();
+                                      } catch (e) {
+                                        print("DOWNVOTE ERROR: $e");
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
 
                                       if (alert['station_name'] != null)
                                         Text("📍 ${alert['station_name']}"),

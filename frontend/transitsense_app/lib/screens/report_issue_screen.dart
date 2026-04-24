@@ -26,6 +26,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
   int? selectedStationId;
   bool isLoadingStations = false;
 
+  bool submitAsAdmin = false;
+
   List<String> directions = [];
   String? selectedDirection;
   bool isLoadingDirections = false;
@@ -285,6 +287,24 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
             ),
 
             const SizedBox(height: 30),
+
+
+            // ADMIN BUTTON
+
+            if (widget.isAdmin)
+              Row(
+                children: [
+                  Checkbox(
+                    value: submitAsAdmin,
+                    onChanged: (value) {
+                      setState(() {
+                        submitAsAdmin = value ?? false;
+                      });
+                    },
+                  ),
+                  const Text("Submit as Admin"),
+                ],
+              ),
 
             // SUBMIT
             SizedBox(

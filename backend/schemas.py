@@ -129,6 +129,8 @@ class AlertOut(BaseModel):
     is_active: bool
     created_at: datetime
     is_official: bool = False
+    upvotes: int
+    downvotes: int
 
     class Config:
         from_attributes = True

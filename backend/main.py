@@ -19,6 +19,8 @@ from sqlalchemy import func
 
 from passlib.context import CryptContext
 
+from fastapi import FastAPI, Depends, HTTPException, Query
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str):
@@ -300,6 +302,8 @@ def delete_alert(alert_id: int, db: Session = Depends(get_db)):
 
     if not alert:
         raise HTTPException(404, "Alert not found")
+
+    db.query(AlertVote).filter(AlertVote.alert_id == alert_id).delete()
 
     db.delete(alert)
     db.commit()

@@ -129,6 +129,25 @@ class ApiService {
   }
 }
 
+static Future<void> voteAlert({
+  required int alertId,
+  required int userId,
+  required int voteType,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/alerts/$alertId/vote'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'user_id': userId,
+      'vote_type': voteType,
+    }),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to vote on alert: ${response.body}');
+  }
+}
+
 
 // GET SAVED USER ID
 

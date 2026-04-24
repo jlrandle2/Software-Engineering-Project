@@ -67,6 +67,9 @@ class SystemAlert(Base):
 
     is_official = Column(Boolean, default=False)
 
+    upvotes = Column(Integer, default=0)
+    downvotes = Column(Integer, default=0)
+
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
